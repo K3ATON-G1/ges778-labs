@@ -1,18 +1,22 @@
 ---
-title: Setting up your viz environment
+title: Setting up Keaton C Green Viz
 format: gfm
 ---
 
-This notebook should confirm that you have the packages you need to get started for the class. Run code chunks individually, then render the notebook, either by pressing a button (if in RStudio), choosing the render command (if in Positron), or calling the quarto CLI (`quarto render 01a_intro_viz/setup.qmd`). If this runs successfully, you should have:
+This notebook should confirm that you have the packages you need to get started for the class. Run code chunks individually, then render the notebook, either by pressing a button (if in RStudio), choosing the render command (if in Positron), or calling the quarto CLI (`quarto render 01a_intro_viz/setup.qmd`).
 
-* a table with a footnote
-* a stacked bar chart with a long wrapped title
+If this runs successfully, you should have:
+
+- A table with a footnote
+- A stacked bar chart with a long wrapped title
 
 ```{r}
 #| label: check-here 
 # verify that `here` is installed and recognizes the project root
 source(here::here("utils/helper_functions.R"))
 ```
+
+This blocks function is pulling the utils from the intro viz directory.
 
 ```{r}
 #| label: setup
@@ -36,7 +40,6 @@ edu <- justviz::acs |>
 comma <- scales::label_comma()
 percent <- scales::label_percent()
 ```
-
 
 ```{r}
 #| label: edu-table-kable
@@ -83,7 +86,6 @@ edu_plot <- edu |>
 
 edu_plot
 ```
-
 
 ```{r}
 #| label: output 
