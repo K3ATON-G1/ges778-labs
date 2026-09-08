@@ -1,0 +1,266 @@
+---
+title: Exploratory data analysis
+Author: Keaton C Green
+format: gfm
+---
+
+For this assessment we are looking at the **Exploratory data analysis** or EVA using the ACS data from \_\_\_. The analysis of this data starts with a subset of the data allowing for data visualization and understanding during the exploration phase. Then with that understanding using some of the numeric values within the dataset we can more proficiently represent the analysis that is possible with different forms of visualization.
+
+```{r, Setup_EDA_00}
+#| label: setup
+library(ggplot2)
+
+acs_tracts <- justviz::acs |>
+    dplyr::filter(level == "tract") |>
+    dplyr::select(county, name, NULL) # replace NULL with the columns you want to use
+
+head(justviz::acs)[1:6]
+```
+
+Look at the first few rows of the data and print a summary to identify anything noteworthy, such as missing values, unusually high or low values, or other patterns in the data.
+
+```{r, Summary_EDA_01}
+#| label: summary
+ 
+summary(justviz::acs)
+```
+
+## Variation
+
+Histograms were created for each numeric variable, with the number of bins and binwidths adjusted to make the distributions easier to read. The distributions were then examined for patterns such as skewness, clustering, and unusually high or low values.
+
+```{r, Histogram_EVA_02}
+#| label: histograms
+
+#1_ages00_17
+#ggplot(justviz::acs, aes(x = ages00_17)) +
+  #geom_histogram(color = "pink", bins = 40)
+
+histogram1 <- function(x) {
+  ggplot(justviz::acs, aes(x = {{ x }})) +
+    geom_histogram(color = "pink", bins = 40)
+}
+
+histogram2 <- function(x) {
+  ggplot(justviz::acs, aes(x = {{ x }})) +
+    geom_histogram(color = "blue", binwidth = 0.01) 
+}
+
+
+histogram1(ages00_17)
+
+histogram1(ages18_34)
+
+histogram1(ages35_64)
+
+histogram1(poverty)
+
+histogram2(less_than_high_school)
+
+histogram2(grad_degree)
+
+
+```
+
+Across the six histograms, the age variables show different distributions. `ages00_17` is relatively centered with observations spread on both sides, while `ages18_34` is more right-skewed. `ages35_64` is more tightly concentrated around its central values.
+
+`poverty` is strongly right-skewed, with most observations at lower poverty rates and fewer observations extending into much higher rates.
+
+`less_than_high_school` and `grad_degree` are also right-skewed, with most observations concentrated at lower rates and a smaller number of observations reaching much higher values.
+
+Overall, poverty, `less_than_high_school`, and `grad_degree` show the clearest right-skewed distributions, while the age variables are generally more concentrated around their central values.
+
+## Unusual values
+
+The `less_than_high_school` variable had a heavy right skew, so the most extreme values were filtered out. Removing these extreme values made it easier to see how most observations were distributed and showed that the majority of areas had relatively low rates of people with less than a high school education. The extreme values had stretched the original histogram and made the distribution of the majority of observations harder to see.
+
+```{r, Extremes_EVA_03}
+#| label: extremes
+
+histogram2(less_than_high_school)
+```
+
+```{r, Extremes_EVA_3.1}
+
+justviz::acs |>
+  dplyr::filter(less_than_high_school < .5) |>
+  ggplot(aes(x = less_than_high_school)) +
+  geom_histogram(color = "white", binwidth = .01)
+
+#The white trim was added to make it easier to read. I used Pink and Blue before as i wnated to seperate the types of data The age ranges and poverty are pink while education level is blue. 
+```
+
+## Covariation
+
+I was unclear on what this section was asking me to do, specifically how the boxplots should be used to compare a numeric variable across counties and what patterns I should be looking for compared with the statewide tract data.
+
+```{r, Boxplots_EVA_04}
+#| label: boxplots
+
+# grab a sequential color palette
+seq_pal <- RColorBrewer::brewer.pal(n = 9, name = "PuBuGn")
+
+race <- justviz::acs |>
+  dplyr::filter(
+    name %in%
+      c(
+        "United States",
+        "Maryland",
+        "Baltimore city",
+        "Baltimore County",
+        "Anne Arundel County",
+        "Howard County"
+      )
+  ) |>
+  dplyr::select(
+    level,
+    name,
+    white,
+    black,
+    latino,
+    asian,
+    other_race,
+  )
+
+race
+```
+
+```{r, Boxplots_EVA_4.1}
+
+race_tidy <- race |>
+  tidyr::pivot_longer(
+    cols = c(
+      white,
+      black,
+      latino,
+      asian,
+      other_race,
+    ),
+    names_to = "race",
+    values_to = "share"
+  )
+
+race_tidy
+```
+
+```{r, Boxplots_EVA_4.2}
+
+race_tidy |>
+  ggplot(aes(x = share, y = name, fill = race)) +
+  geom_col(width = 0.8, position = position_fill()) +
+  scale_fill_manual(values = seq_pal)
+```
+
+```{r, Boxplots_EVA_4.3}
+
+race_tidy |>
+  dplyr::mutate(name = factor(name) |> forcats::fct_rev()) |>
+  ggplot(aes(x = share, y = name, fill = race)) +
+  geom_col(width = 0.8, position = position_fill()) +
+  scale_fill_manual(values = seq_pal)
+```
+
+```{r}
+
+race_tidy |>
+  dplyr::mutate(level = forcats::as_factor(level)) |>
+  dplyr::arrange(level, name) |>
+  dplyr::mutate(name = forcats::as_factor(name) |> forcats::fct_rev()) |>
+  dplyr::mutate(
+    race = forcats::as_factor(race) |>
+      forcats::fct_relabel(snakecase::to_sentence_case) |>
+      forcats::fct_recode(
+        "White" = "White",
+        "Black" = "Black",
+        "Latino" = "Latino",
+        "Asian" = "Asian",
+        "Other race" = "Other race"
+      )
+  ) |>
+  ggplot(aes(x = share, y = name, fill = race)) +
+  geom_col(width = 0.8, position = position_fill(reverse = TRUE)) +
+  scale_fill_manual(values = seq_pal)
+```
+
+```{r}
+
+ggplot(race_tidy, aes(x = race, y = share, fill = race)) +
+  geom_boxplot() +
+  scale_y_continuous(labels = scales::percent) +
+  scale_x_discrete(
+    labels = c(
+      "white" = "White",
+      "black" = "Black",
+      "latino" = "Latino",
+      "asian" = "Asian",
+      "other_race" = "Other Races"
+    )
+  ) +
+  scale_fill_discrete(
+    name = "Demographic",
+    labels = c(
+      "white" = "White",
+      "black" = "Black",
+      "latino" = "Latino",
+      "asian" = "Asian",
+      "other_race" = "Other Races"
+    )
+  ) +
+  labs(
+    x = "Demographic",
+    y = "Rate"
+  )
+```
+
+*Pick a variable you want to investigate; pretend you're going to build a model to predict this variable (dependent variable). Choose another variable that you think could be a feature in your model (independent variable), and make a scatterplot with your dependent variable on the y-axis and your independent variable on the x-axis. If it's too dense to read easily, try different strategies to reduce overplotting. Repeat this with 2 more independent variables.*
+
+```{r}
+#| label: scatter-1
+
+scatter_example <- justviz::acs |>
+  dplyr::filter(level == "tract") |>
+  dplyr::select(
+    county,
+    name,
+    homeownership,
+    median_hh_income,
+    total_hh
+  )
+ 
+```
+
+```{r}
+#| label: scatter-2
+ 
+ggplot(scatter_example, aes(x = median_hh_income, y = homeownership)) +
+  geom_point()
+```
+
+```{r}
+#| label: scatter-3
+ 
+ggplot(scatter_example, aes(x = homeownership, y = total_hh)) +
+  geom_point()
+```
+
+*Now pick one of those independent variables that you think could potentially be used in a linear regression model. On your scatterplot, add a regression line with `geom_smooth(method = lm)` (see [the docs](https://ggplot2.tidyverse.org/reference/geom_smooth.html))*
+
+```{r}
+#| label: scatter-lm
+ 
+scatter_example |>
+  dplyr::filter(county == "Baltimore city") |>
+  ggplot(aes(x = median_hh_income, y = homeownership)) +
+  geom_point(alpha = 0.45, size = 2) +
+  geom_smooth(method = lm) +
+  scale_x_continuous(labels = scales::label_dollar()) +
+  scale_y_continuous(labels = scales::percent) +
+  labs(
+    x = "
+    Median Household Income",
+    y = "Homeownership Rate"
+  ) +
+  theme_classic()
+```
+
+The regression line shows a positive relation between median household incomes and homeownership rate within Baltimore City census tracts. As the median household income increases the homeownership also rises, though the spread of observations opens "what other factors can contribute to the variation".
