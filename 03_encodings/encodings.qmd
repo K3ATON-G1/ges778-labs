@@ -203,7 +203,7 @@ acs_balt |>
 
 ![Chart 9, original version](./bad_bubble.png)
 
-This scatter chart is trying to show the proportional quantity, it is using the total household and its various ranges to show the clustering of groups in specific areas. It gives a clear idea of where the data has the most exagurated data. \
+This scatter chart is trying to show the proportional quantity, it is using the total household and its various ranges to show the clustering of groups in specific areas. It gives a clear idea of where the data has the most exagurated data.\
 The thing with this chart that may cause confusion is the variation in the points. Clustering the data is good but in this case much of the data is being grouped so much the large points are unproportionally dominating the dataset.
 
 Changes,

@@ -5,24 +5,41 @@ format: gfm
 
 ## Slicing & dicing trends
 
-Imagine you're a slimy political operative consulting on a campaign for some office in the Maryland county of your choice. You have access to unemployment data since the start of 2020, when the opposing candidate took office. You want to make them look bad, so you cherrypick the data to make it look like unemployment has only increased lately so you can blame it on them. 
+Imagine you're a slimy political operative consulting on a campaign for some office in the Maryland county of your choice. You have access to unemployment data since the start of 2020, when the opposing candidate took office. You want to make them look bad, so you cherrypick the data to make it look like unemployment has only increased lately so you can blame it on them.
 
 Filter the data for just the county you choose. Then further filter, summarize, or otherwise manipulate the data to make a chart that tells the misleading story you want.
 
 ```{r}
 #| label: setup
 library(ggplot2)
+#install.packages("lubridate")
+
 unemp_since_2020 <- justviz::unemployment |>
     dplyr::filter(lubridate::year(date) >= 2020)
 
-county_unemp <- unemp_since_2020 |>
-    dplyr::filter() # fill in name == "Baltimore County", etc
+Balt_City_unemp <- unemp_since_2020 |>
+    dplyr::filter(name == "Baltimore city") # fill in name == "Baltimore County", etc
+
+View(Balt_City_unemp)
+
+# what im seeing is 2019-10-30 through 2021-6-21 is a constend increase in rates for unemployment. 
 ```
 
-
 ```{r}
-#| label: misleading-unemployment
- 
+
+cherrypicker_unemp <- county_unemp |>
+  dplyr::mutate(year = lubridate::year(date)) |>
+  dplyr::group_by(name, year) |>
+  dplyr::summarise(rate = mean(rate, na.rm = TRUE), .groups = "drop")
+
+ggplot(cherrypicker_unemp, aes(x = year, y = rate)) +
+  geom_line() +
+  labs(
+    title = "Annual average unemployment rate, Baltimore City, 2020–2025",
+    x = "Year",
+    y = "Unemployment rate"
+  )
+
 ```
 
 ## Missing data
@@ -31,19 +48,46 @@ Now you're back to being a responsible data visualization professional. Filter t
 
 Think of this task like a puzzle, and maybe sketch it on paper first. You'll probably need to add at least one new variable to your data. Some hints:
 
-* You want to draw a line that includes October, but only that 1 observation is missing. You can't draw a line with only 1 point; you need at least 2.
-* You can identify missing data with `is.na(rate)`, which returns `TRUE` if a value is NA, or `FALSE` if not.
-* Read the docs for `dplyr::lead` and `dplyr::lag`. If you use them, set `default = FALSE` (ask me about this if it doesn't make sense, it's just a curveball that gets me every time).
-* You can add multiple `geom_line` calls, or you can do your calculations and bind your data back together, then map a variable across an encoding like linetype. The first of these is simpler, but the second is more flexible.
+- You want to draw a line that includes October, but only that 1 observation is missing. You can't draw a line with only 1 point; you need at least 2.
+- You can identify missing data with `is.na(rate)`, which returns `TRUE` if a value is NA, or `FALSE` if not.
+- Read the docs for `dplyr::lead` and `dplyr::lag`. If you use them, set `default = FALSE` (ask me about this if it doesn't make sense, it's just a curveball that gets me every time).
+- You can add multiple `geom_line` calls, or you can do your calculations and bind your data back together, then map a variable across an encoding like linetype. The first of these is simpler, but the second is more flexible.
 
 General idea you're going for is like this:
 
-![Unemployment with dashed line](./unemployment_filled.png)
-
 ```{r}
-#| label: unemployment-gap
+
+unemp_2025 <- Balt_City_unemp |>
+  dplyr::filter(lubridate::year(date) == 2025)
+
+ggplot(unemp_2025, aes(x = date, y = rate)) +
+  geom_line(
+    data = dplyr::filter(unemp_2025, date < as.Date("2025-10-01"))
+  ) +
+  geom_line(
+    data = dplyr::filter(unemp_2025, date > as.Date("2025-10-01"))
+  ) +
+  geom_point() +
+  geom_line(
+    data = dplyr::filter(
+      unemp_2025,
+      date == as.Date("2025-09-01") |
+        date == as.Date("2025-11-01")
+    ),
+    linetype = "dashed"
+  ) +
+  scale_y_continuous(labels = scales::percent) +
+  labs(
+    title = "Monthly unemployment rate, Baltimore city, 2025",
+    subtitle = "Dashed line bridges the missing October rate",
+    x = "Date",
+    y = "Unemployment Rate"
+  )
 
 ```
+
+
+![Unemployment with dashed line](./unemployment_filled.png)
 
 ## Distributions vs summaries
 
@@ -52,5 +96,49 @@ Pick 2 variables from the ACS data. Filter for just tracts within 5-7 counties (
 ```{r}
 #| label: distributions
  
+acs_tracts <- justviz::acs |>
+  dplyr::filter(
+    level == "tract",
+    county %in% c(
+      "Baltimore city",
+      "Baltimore County",
+      "Anne Arundel County",
+      "Howard County",
+      "Harford County"
+    )
+  )
+ggplot(acs_tracts, aes(x = homeownership, y = county)) +
+  geom_boxplot() +
+  scale_x_continuous(labels = scales::percent) +
+  labs(title = "Homeownership across tracts", x = "Homeownership rate",
+y = "County"
+)
+ggplot(acs_tracts, aes(x = median_hh_income, y = county)) +
+  geom_boxplot() +
+  labs(title = "Median household income across tracts",
+       x = "Median household income")
 ```
+```{r}
+homeownership_summary <- acs_tracts |>
+  dplyr::group_by(county) |>
+  dplyr::summarise(
+    average = mean(homeownership, na.rm = TRUE),
+    lowest = min(homeownership, na.rm = TRUE),
+    highest = max(homeownership, na.rm = TRUE)
+  )
 
+ggplot(homeownership_summary, aes(y = county, x = average)) +
+  geom_pointrange(aes(xmin = lowest, xmax = highest)) +
+  geom_point(size = 10) +
+  geom_text(
+    aes(label = scales::percent(average, accuracy = 1)),
+    color = "white",
+    size = 3
+  ) +
+  scale_x_continuous(labels = scales::percent) +
+  labs(
+    title = "Average and range of tract homeownership",
+    x = "Homeownership rate",
+    y = "County"
+  )
+```

@@ -2,8 +2,8 @@
 
 
 For this assessment we are looking at the **Exploratory data analysis**
-or EVA using the ACS data from \_\_\_. The analysis of this data starts
-with a subset of the data allowing for data visualization and
+or EVA using the ACS data from Connecticut. The analysis of this data
+starts with a subset of the data allowing for data visualization and
 understanding during the exploration phase. Then with that understanding
 using some of the numeric values within the dataset we can more
 proficiently represent the analysis that is possible with different

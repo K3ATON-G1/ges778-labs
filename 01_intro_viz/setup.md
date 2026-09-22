@@ -1,9 +1,6 @@
----
+------------------------------------------------------------------------
 
-editor_options: 
-  markdown: 
-    wrap: 72
----
+editor_options: markdown: wrap: 72 ---
 
 # Setting up your viz environment
 
@@ -66,7 +63,7 @@ edu |>
 ```
 
 | Name | Ages 25 plus | Less than high school | High school grad | Some college or aa | Bachelors | Grad degree |
-|:----------|----------:|----------:|----------:|----------:|----------:|----------:|
+|:---|---:|---:|---:|---:|---:|---:|
 | United States | 230,807,303 | 10% | 26% | 28% | 22% | 14% |
 | Maryland | 4,301,335 | 9% | 23% | 24% | 23% | 21% |
 | Baltimore city | 401,549 | 12% | 28% | 24% | 18% | 18% |
@@ -484,7 +481,7 @@ edu |>
 ```
 
 |   | Ages 25 plus | Less than high school | High school grad | Some college or aa | Bachelors | Grad degree |
-|-----------|-----------|-----------|-----------|-----------|-----------|-----------|
+|----|----|----|----|----|----|----|
 | United States | 230,807,303 | 10% | 26% | 28% | 22% | 14% |
 | Maryland | 4,301,335 | 9% | 23% | 24% | 23% | 21% |
 | Baltimore city | 401,549 | 12% | 28% | 24% | 18% | 18% |
