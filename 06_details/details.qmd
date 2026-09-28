@@ -86,7 +86,6 @@ ggplot(unemp_2025, aes(x = date, y = rate)) +
 
 ```
 
-
 ![Unemployment with dashed line](./unemployment_filled.png)
 
 ## Distributions vs summaries
@@ -118,6 +117,7 @@ ggplot(acs_tracts, aes(x = median_hh_income, y = county)) +
   labs(title = "Median household income across tracts",
        x = "Median household income")
 ```
+
 ```{r}
 homeownership_summary <- acs_tracts |>
   dplyr::group_by(county) |>

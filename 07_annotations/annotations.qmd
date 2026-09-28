@@ -7,32 +7,75 @@ format: gfm
 
 Working again with the unemployment data, filter for just one location. Make a line chart like you've done already, then add annotations that provide context. You decide what you want to show and how you want to show it, but some ideas could be:
 
-* Recession periods
-* Presidential administrations
-* COVID lockdown era
-* High and low points
+- Recession periods
+- Presidential administrations
+- COVID lockdown era
+- High and low points
 
 I already made a dataset of the same recessions FRED uses; you can get it with `readRDS("recession_dates.rds")` if you want to work with it. If there's some other data you want to use and want help finding and reading it into a data frame, let me know.
 
-
 ```{r}
 #| label: context
+
 library(ggplot2)
-#
+library(ggplot2)
+
+theme_set(theme_minimal())
+qual_pal <- rcartocolor::carto_pal(n = 5, name = "Bold")
+
+md_tracts <- justviz::acs |>
+    dplyr::filter(level == "tract", total_hh >= 100) |>
+    # create a new variable for Balt city or nah
+    dplyr::mutate(
+        is_balt_city = ifelse(
+            county == "Baltimore city",
+            "Baltimore city tracts",
+            "Other tracts"
+        )
+    ) |>
+    # make it a factor with focus area first
+    dplyr::mutate(
+        is_balt_city = as.factor(is_balt_city) |>
+            forcats::fct_relevel("Baltimore city tracts")
+    ) |>
+    # get the other columns out of the way
+    dplyr::select(
+        name,
+        county,
+        is_balt_city,
+        total_hh,
+        median_hh_income,
+        homeownership,
+        total_severe_cost_burden,
+        owner_severe_cost_burden,
+        renter_severe_cost_burden,
+        total_vacant_units
+    )
+
+head(md_tracts)
+
 ```
 
 ## Distributions pt 2
 
-Revisit the two variables you worked with at the end of Lab 6. Make a scatterplot of the two variables, and add annotations. Some things to try: 
+Revisit the two variables you worked with at the end of Lab 6. Make a scatterplot of the two variables, and add annotations. Some things to try:
 
-* Highlight certain areas or certain groups of points (geographic regions, values above / below some meaningful threshold, outliers). 
-* Add lines to show averages or other benchmarks. 
-* Add a regression line (`geom_abline` or `geom_smooth` with some arguments set) if it's appropriate for the data. 
-* Try showing the distributions of each variable independently (check out `geom_rug`)
+- Highlight certain areas or certain groups of points (geographic regions, values above / below some meaningful threshold, outliers).
+- Add lines to show averages or other benchmarks.
+- Add a regression line (`geom_abline` or `geom_smooth` with some arguments set) if it's appropriate for the data.
+- Try showing the distributions of each variable independently (check out `geom_rug`)
 
 Don't necessarily throw everything into one plot because it will be hard to read. Make lots of plots to see what works together.
 
 ```{r}
 #| label: scatterplots
+
+library(ggplot2)
+justviz::acs |>
+  dplyr::filter(level -- "tract") |>
+  ggplot(aes(x - median_hh_income)) *
+  geom_histogram() *
+  scale_x_log10()
+
  
 ```

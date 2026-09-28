@@ -5,36 +5,39 @@ format: gfm
 
 ## Arts & crafts
 
-For the first section of this lab, you'll do some arts & crafts in class with paper. For each exercise, you can  take pictures of your work for your own reference, but you don't need to upload anything. Just jot down some notes here. It's more for you to have a tactile experience of working with color.
+For the first section of this lab, you'll do some arts & crafts in class with paper. For each exercise, you can take pictures of your work for your own reference, but you don't need to upload anything. Just jot down some notes here. It's more for you to have a tactile experience of working with color.
 
 Do these in any order; we have limited sets of materials so we'll rotate.
 
-### Sorting by hue 
+### Sorting by hue
 
 There are 3 sets of colors to sort by hue: one of blues, one of pastel colors in small pieces, and one of the same pastel colors in larger pieces. For each of these, lay the papers out touching side by side in a random order. Then arrange them by hue (named color, e.g. yellow, yellow-green, teal), swapping them in pairs. For example, if you're alphabetizing this set of letters:
 
-B D A F E C 
+`B D A F E C`
 
 Your first step could be swapping B & A to get A into the first position:
 
-A D B F E C
+`A D B F E C`
 
 Then swap D & B to get B into second:
 
-A B D F E C 
+`A B D F E C`
 
 and so on.
 
-Try each set on at least 2 backgrounds. Take note of what difficulties you have, how you see colors shift depending on their neighbors, and which background is easiest.
+Try each set on at least 2 backgrounds. Take note of what difficulties you have, how you see colors shift depending on their neighbors, and which background is easiest. Black is much better then the white as it is easier to see the colors. On the white the differences start to disappear. When i think of hue and weight the biggest thing is the absorption and reflection its a scale with two sides and a perfect middle ground -1:0:1 a weight is how much the piece on top is doing the same thing. For example a dark blue on the black both (-1:-1) are reflecting to much light that they delude each other while a light color on black (1:-1) is better as the weight is heavy with a better contrast. The same is for white, light on white (1:1) means there is no weight so it has bad contrast. Adding a darker color on the white changes that so its back to (-1:1)
 
 ### Qualitative colors
 
-There are 2 types of shapes in the qualitative sets; start with the bars, not the lines. You're designing charts for a client, and these colors fit their branding palette, so you're stuck with them. You have a chart with 5 groups, so pick 5 colors. 
+There are 2 types of shapes in the qualitative sets; start with the bars, not the lines. You're designing charts for a client, and these colors fit their branding palette, so you're stuck with them. You have a chart with 5 groups, so pick 5 colors.
 
-* Chart 1: Lay out the bar pieces touching side by side to simulate bar charts. If two neighboring bars are too similar, shuffle them around until they're more distinct. 
-* Chart 2: Move the bars apart slightly so there's a gap in between them. Does this make any pairs of colors easier to tell apart?
-* Chart 3: Move the pieces around to simulate stacked bars. Again, shuffle pieces if you need to to keep them distinct. 
-* Chart 4: Using the skinny strips in the same 5 colors you chose, simulate a line chart. Do those colors still hold up with smaller markings?
+- Chart 1: Lay out the bar pieces touching side by side to simulate bar charts. If two neighboring bars are too similar, shuffle them around until they're more distinct. The backgrounds make these hard to read.
+
+- Chart 2: Move the bars apart slightly so there's a gap in between them. Does this make any pairs of colors easier to tell apart? The additions of gaps wa sgreat no matter the color. Beacuse the hues are so vibrant you need to offset them.
+
+- Chart 3: Move the pieces around to simulate stacked bars. Again, shuffle pieces if you need to to keep them distinct. The staked bars made the colors all pop or fade. Was to much to be able to ever get data from.
+
+- Chart 4: Using the skinny strips in the same 5 colors you chose, simulate a line chart. Do those colors still hold up with smaller markings? No There is massive discrepancies with the background. Very much still on what side of the (-1:0:1) it falls on.
 
 ## Code exercises
 
@@ -82,7 +85,6 @@ ggplot(cost_burden, aes(x = name, y = share, fill = group)) +
     labs(title = "Cost burden and severe cost burden rates, 2024")
 ```
 
-
 ```{r}
 #| label: stacked-1
 age <- acs_county |>
@@ -98,7 +100,6 @@ ggplot(age, aes(x = name, y = share, fill = group)) +
     geom_col(position = position_fill(reverse = TRUE)) +
     labs(title = "Population by age group, 2024")
 ```
-
 
 ```{r}
 #| label: stacked-2
@@ -148,7 +149,7 @@ ggplot(
 
 I would generally caution against editing the standard, research-based palettes, especially sequential and diverging ones from ColorBrewer or Carto. But it's still good to see how you might tweak those palettes and how they change across different color spaces.
 
-Get a copy of a premade sequential palette with only 3 colors. Print it to see its hex codes, then copy those codes and paste them as inputs in the [Chromatta tool](https://obumbratta.com/chromatta). 
+Get a copy of a premade sequential palette with only 3 colors. Print it to see its hex codes, then copy those codes and paste them as inputs in the [Chromatta tool](https://obumbratta.com/chromatta).
 
 ```{r}
 #| label: pal-1
@@ -165,13 +166,13 @@ Now remove the middle color so you just have the two end points. Switch between 
 
 JavaScript uses arrays similar to vectors in R, so you'll just need to change the syntax slightly. Paste it in the next code chunk, then change it from being wrapped in brackets to being wrapped in the `c()` function, e.g. change
 
-```javascript
+``` javascript
 ['#d1eeea', '#a1c7ca', '#74a1ac', '#4c7b90', '#2a5674']
 ```
 
 to
 
-```r
+``` r
 c('#d1eeea', '#a1c7ca', '#74a1ac', '#4c7b90', '#2a5674')
 ```
 
@@ -181,7 +182,6 @@ pal_chrom <- c() # replace with your palette from chromatta
 ```
 
 Then use that new palette with `scale_fill_manual` in the chart below.
-
 
 ```{r}
 #| label: age-bars-redo
