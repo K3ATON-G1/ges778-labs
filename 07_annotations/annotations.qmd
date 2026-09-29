@@ -43,8 +43,8 @@ md_tracts <- justviz::acs |>
         name,
         county,
         is_balt_city,
-        total_hh,
         median_hh_income,
+        total_hh,
         homeownership,
         total_severe_cost_burden,
         owner_severe_cost_burden,
@@ -82,13 +82,39 @@ md_tracts |>
   labs(
     title = "Median Household Income across Maryland", 
     x = "Median Household Income",
-    y = "Count of Tracts"
+    y = "Total Homeownership"
   )
 
-income_scatter <- md_tracts |> 
-  dplyr::filter(c(median_hh_income),
-    median_hh_income >0, 
-    !is.na (homeownership)
-  ) |>
-  ggplot(aes(X = median_hh_income, is_balt_city)) + geom_abline(alpha = .9)
+income_scatter <- md_tracts |>
+    dplyr::filter(median_hh_income > 0) |>
+    ggplot(aes(
+        x = median_hh_income,
+        y = total_hh,
+        color = is_balt_city
+    )) +
+    geom_point(alpha = 0.7) +
+    scale_color_manual(
+        values = c(
+            "Baltimore city tracts" = "mediumorchid",
+            "Other tracts" = "gray70"
+        )
+    ) +
+    scale_x_continuous(breaks = seq(0, 10,000, by = 3))
+
+income_scatter
 ```
+```{r}
+income_scatter +
+    coord_equal()
+```
+```{r}
+income_scatter +
+    # abline as in y = ax + b
+    geom_abline(intercept = 0, slope = 1, color = "gray40") +
+    coord_equal() +
+    labs(
+        title = "Median household income for households vs renter households,\nMaryland tracts, 2024",
+        subtitle = "With parity line shown"
+    )
+```
+

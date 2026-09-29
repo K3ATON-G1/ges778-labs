@@ -119,6 +119,22 @@ ggplot(acs_tracts, aes(x = median_hh_income, y = county)) +
        x = "Median household income")
 ```
 
+income_acs\<- acs_tracts \|\>
+
+dplyr::group_by(county) \|\>
+
+dplyr::summarise(
+
+average = mean(median_hh_income, na.rm = TRUE),
+
+lowest = min(median_hh_income, na.rm = TRUE),
+
+highest = max(median_hh_income, na.rm = TRUE),
+
+.groups = "drop"
+
+)
+
 ```{r}
 homeownership_summary <- acs_tracts |>
   dplyr::group_by(county) |>
@@ -143,29 +159,6 @@ ggplot(homeownership_summary, aes(y = county, x = average)) +
     y = "County"
   )
 
-income_acs<- acs_tracts |>
-  dplyr::group_by(county) |>
-  dplyr::summarise(
-    average = mean(median_hh_income, na.rm = TRUE),
-    lowest = min(median_hh_income, na.rm = TRUE),
-    highest = max(median_hh_income, na.rm = TRUE),
-    .groups = "drop"
-  )
 
-ggplot(income_acs, aes(y = county, x = average)) +
-  geom_pointrange(aes(xmin = lowest, xmax = highest)) +
-  geom_point(size = 10) +
-  geom_text(
-    aes(label = scales::dollar(average, scale = 1 / 1000, suffix = "k",
-                               accuracy = 1)),
-    color = "white",
-    size = 3
-  ) +
-  scale_x_continuous(labels = scales::dollar) +
-  labs(
-    title = "Average and range of tract median household income",
-    x = "Median household income",
-    y = "County"
-  )
 
 ```
