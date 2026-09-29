@@ -53,12 +53,15 @@ md_tracts <- justviz::acs |>
     )
 
 head(md_tracts)
-
 ```
 
 ## Distributions pt 2
 
-Revisit the two variables you worked with at the end of Lab 6. Make a scatterplot of the two variables, and add annotations. Some things to try:
+Revisit the two variables you worked with at the end of Lab 6. Make a scatterplot of the two variables, and add annotations. 
+- Median Household Income 
+- Homeowner
+
+Some things to try:
 
 - Highlight certain areas or certain groups of points (geographic regions, values above / below some meaningful threshold, outliers).
 - Add lines to show averages or other benchmarks.
@@ -71,11 +74,21 @@ Don't necessarily throw everything into one plot because it will be hard to read
 #| label: scatterplots
 
 library(ggplot2)
-justviz::acs |>
-  dplyr::filter(level -- "tract") |>
-  ggplot(aes(x - median_hh_income)) *
-  geom_histogram() *
-  scale_x_log10()
+md_tracts |>
+  dplyr::filter(!is.na(median_hh_income), median_hh_income >0) |>
+  ggplot(aes(x = median_hh_income)) +
+  geom_histogram() +
+  scale_x_log10()+
+  labs(
+    title = "Median Household Income across Maryland", 
+    x = "Median Household Income",
+    y = "Count of Tracts"
+  )
 
- 
+income_scatter <- md_tracts |> 
+  dplyr::filter(c(median_hh_income),
+    median_hh_income >0, 
+    !is.na (homeownership)
+  ) |>
+  ggplot(aes(X = median_hh_income, is_balt_city)) + geom_abline(alpha = .9)
 ```

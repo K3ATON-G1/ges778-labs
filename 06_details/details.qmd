@@ -28,16 +28,17 @@ View(Balt_City_unemp)
 ```{r}
 
 cherrypicker_unemp <- county_unemp |>
-  dplyr::mutate(year = lubridate::year(date)) |>
-  dplyr::group_by(name, year) |>
-  dplyr::summarise(rate = mean(rate, na.rm = TRUE), .groups = "drop")
+  dplyr::filter(date >= as.Date("2023-01-01")) |>
+  dplyr::arrange(date) |>
+  dplyr::slice(which.min(rate):dplyr::n()) |>
+  dplyr::mutate(rate_shown = cummax(rate))
 
-ggplot(cherrypicker_unemp, aes(x = year, y = rate)) +
+ggplot(cherrypicker_unemp, aes(x = date, y = rate_shown)) +
   geom_line() +
   labs(
-    title = "Annual average unemployment rate, Baltimore City, 2020–2025",
-    x = "Year",
-    y = "Unemployment rate"
+    title = "Baltimore City unemployment keeps climbing",
+    x = "Month",
+    y = "Highest unemployment rate!"
   )
 
 ```
@@ -141,4 +142,30 @@ ggplot(homeownership_summary, aes(y = county, x = average)) +
     x = "Homeownership rate",
     y = "County"
   )
+
+income_acs<- acs_tracts |>
+  dplyr::group_by(county) |>
+  dplyr::summarise(
+    average = mean(median_hh_income, na.rm = TRUE),
+    lowest = min(median_hh_income, na.rm = TRUE),
+    highest = max(median_hh_income, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+ggplot(income_acs, aes(y = county, x = average)) +
+  geom_pointrange(aes(xmin = lowest, xmax = highest)) +
+  geom_point(size = 10) +
+  geom_text(
+    aes(label = scales::dollar(average, scale = 1 / 1000, suffix = "k",
+                               accuracy = 1)),
+    color = "white",
+    size = 3
+  ) +
+  scale_x_continuous(labels = scales::dollar) +
+  labs(
+    title = "Average and range of tract median household income",
+    x = "Median household income",
+    y = "County"
+  )
+
 ```
