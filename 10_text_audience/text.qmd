@@ -18,7 +18,9 @@ qual_pal <- RColorBrewer::brewer.pal(n = 5, name = "Set2")
 
 ## Adding text within a chart
 
-Go back to lab 2 where we defined a function to place labels slightly inward from the end of a bar. Copy and paste that code here. 
+Go back to lab 2 where we defined a function to place labels slightly inward from the end of a bar. Copy and paste that code here.
+
+Done
 
 ```{r}
 #| label: label-nudge-function
@@ -29,7 +31,7 @@ label_nudge <- function(y) {
 
 ```
 
-Add code to the definition of dental_visit to add 2 new variables: `nudged_value`, a nudged position for the labels, and `pct_value`, where you've formatted the labels as percentages. Do this either in 1 or 2 `dplyr::mutate` calls. 
+Add code to the definition of dental_visit to add 2 new variables: `nudged_value`, a nudged position for the labels, and `pct_value`, where you've formatted the labels as percentages. Do this either in 1 or 2 `dplyr::mutate` calls.
 
 You can use the `percent` function that's in the formatters script, or define a new one to fit a different number of decimal places (`accuracy` argument), since the CDC data includes 1 decimal place.
 
@@ -85,7 +87,7 @@ ggplot(dental_visit, aes(x = location, y = value)) +
   )
 ```
 
-Does that function work as well when the chart is flipped to horizontal? Adjust arguments of the function and in your `geom_text` call. 
+Does that function work as well when the chart is flipped to horizontal? Adjust arguments of the function and in your `geom_text` call.
 
 ```{r}
 #| label: label-nudge-2
@@ -124,11 +126,20 @@ Use [wordcalc](https://www.wordcalc.com/readability/) or another online Flesch-K
 
 For both charts, write alt text that will explain the chart to someone using a screen reader (put it in the `fig-alt` comment). Follow the recommendations from [Amy Cesal's post](https://medium.com/nightingale/writing-alt-text-for-data-visualization-2a218ef43f81?sk=32db60d651933b5ac2c5b6507f3763b5).
 
-
 ```{r}
 #| label: chart-agency
-#| fig-alt: "Six waffle charts comparing racial and ethnic population shares in Anne Arundel County, Baltimore City, Baltimore County, Howard County, Maryland, and the United States. Each square represents about one percent of the population. Categories are Asian, Black, Latino, White, and Other Race."
-#| 
+#| fig-alt: "Six waffle charts comparing racial and ethnic population shares in Anne Arundel County, Baltimore City, Baltimore County, Howard County, Maryland, and the United States. Each square represents about one percent of the population rate; categories are Asian, Black, Latino, White, and Other Race."
+
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(waffle)
+
+race_tidy |>
+  ggplot(aes(x = share, y = name, fill = race)) +
+  geom_col(width = 0.8, position = position_fill()) +
+  scale_fill_manual(values = seq_pal)
+
 race_colors <- c(
   "asian"      = "#000000",
   "black"      = "#1696D2",
@@ -165,8 +176,7 @@ waffle_data <- race_tidy |>
     extra = 100L - sum(squares),
     squares = as.integer(
       squares +
-        (rank(-remainder, ties.method = "first") <= extra)
-    )
+        (rank(-remainder, ties.method = "first") <= extra))
   ) |>
   uncount(squares) |>
   mutate(
@@ -218,7 +228,7 @@ ggplot(waffle_data, aes(x = x, y = y, fill = race)) +
       margin = margin(b = 8)
     ),
     plot.subtitle = element_text(
-      hjust = 0,
+       hjust = 0,
       margin = margin(b = 20)
     ),
     strip.text = element_text(
