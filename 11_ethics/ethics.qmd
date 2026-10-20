@@ -10,44 +10,310 @@ library(ggplot2)
 
 ## Archived data
 
-We'll get started now working with the EPA's EJSCREEN data. This was a project to assess a variety of environmental hazards and their possible disparate impacts on populations the EPA considered socioeconomically vulnerable. For each indicator, every tract was given a percentile (0-99) for how it ranked compared to tracts across the country. These rankings were then scaled based on two demographic indices to bring the data into an environmental justice framework. You can find the data for Maryland tracts at `justviz::ej_natl`, and read documentation at `?justviz::ej_natl`.
-
-Unfortunately, when hundreds of federal datasets were removed in early 2025, EJSCREEN was one that never went back online. Luckily, backups of all the data and documentation are housed in a [repo](https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/RLR5AX) at Harvard Dataverse, including the technical docs. Download the [documentation](https://dataverse.harvard.edu/file.xhtml?fileId=10775982&version=4.0) (click Access File, then PDF). The main thing you need from the technical docs is the summary of environmental indicators on page 15.
-
-Do a little EDA, focused mainly on 2 or 3 indicators. Because of the long shape of the data frame, you'll need to reshape it at some point. To start with, I'll reshape it to get one row per tract and several data columns. You might need to reshape again later.
+> We'll get started now working with the EPA's EJSCREEN data. This was a project to assess a variety of environmental hazards and their possible disparate impacts on populations the EPA considered socioeconomically vulnerable. For each indicator, every tract was given a percentile (0-99) for how it ranked compared to tracts across the country. These rankings were then scaled based on two demographic indices to bring the data into an environmental justice framework. You can find the data for Maryland tracts at `justviz::ej_natl`, and read documentation at `?justviz::ej_natl`.
+>
+> Unfortunately, when hundreds of federal datasets were removed in early 2025, EJSCREEN was one that never went back online. Luckily, backups of all the data and documentation are housed in a [repo](https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/RLR5AX) at Harvard Dataverse, including the technical docs. Download the [documentation](https://dataverse.harvard.edu/file.xhtml?fileId=10775982&version=4.0) (click Access File, then PDF). The main thing you need from the technical docs is the summary of environmental indicators on page 15.
+>
+> Do a little EDA, focused mainly on 2 or 3 indicators. Because of the long shape of the data frame, you'll need to reshape it at some point. To start with, I'll reshape it to get one row per tract and several data columns. You might need to reshape again later.\
+>
+> **The three i wnat to use from the EJSCREEN documentation.** \
+> **Wastewater discharge:** Modeled toxicity-weighted concentrations of listed chemicals in stream segments within 500 meters, divided by distance.
+>
+> **Hazardous waste proximity:** Nearby hazardous waste management facilities within 10 kilometers, weighted by distance. The label is “hazardous waste,” rather than “hazardous water.”
+>
+> **Underground storage tanks:** A combined indicator of underground storage tanks and leaking tanks, with leaking tanks given additional weight.
 
 ```{r}
 #| label: subset
-ej_subset <- justviz::ej_natl |>
-    # pick different indicators here
-    dplyr::filter(indicator %in% c("pm25", "no2")) |>
-    tidyr::pivot_wider(
-        id_cols = tract,
-        names_from = indicator,
-        values_from = c(value_ptile, d2_ptile, d5_ptile)
+library(tidyverse)
+
+ej_selected <- justviz::ej_natl |>
+  mutate(
+    selected_indicator = case_when(
+      str_detect(indicator, regex("wastewater|discharge",
+                                  ignore_case = TRUE)) ~ "wastewater",
+      str_detect(indicator, regex("hazardous|haz.*waste",
+                                  ignore_case = TRUE)) ~ "hazardous",
+      str_detect(indicator, regex("underground|storage|ust",
+                                  ignore_case = TRUE)) ~ "tanks",
+      TRUE ~ NA_character_
     )
+  ) |>
+  filter(!is.na(selected_indicator))
+
+ej_selected |>
+  distinct(indicator, selected_indicator)
+
+ej_subset <- ej_selected |>
+  pivot_wider(
+    id_cols = tract,
+    names_from = selected_indicator,
+    values_from = c(value_ptile, d2_ptile, d5_ptile)
+  )
+
+head(ej_subset)
+
+```
+
+```{r}
+ej_selected |>
+  distinct(indicator, selected_indicator)
+
+ej_subset <- ej_selected |>
+  pivot_wider(
+    id_cols = tract,
+    names_from = selected_indicator,
+    values_from = c(value_ptile, d2_ptile, d5_ptile)
+  )
 
 head(ej_subset)
 ```
 
-Draft a chart that compares two variables in your reshaped data. Because you want to be careful to compare apples to apples, you'll want to compare columns of the same measure type (d2_ptile) *or* for the same indicator (pm25). Write up a figure note to accompany the chart. This should include:
+> Draft a chart that compares two variables in your reshaped data. Because you want to be careful to compare apples to apples, you'll want to compare columns of the same measure type (d2_ptile) *or* for the same indicator (pm25). Write up a figure note to accompany the chart. This should include:
+>
+> - The name of the dataset
+> - Short definitions of the indicators based on page 15 of the docs
+> - Reference to the fact that these are percentiles, not direct rates or percentages
+> - A citation for the dataset from Harvard Dataverse (recommended citations are there, as is metadata to use in a citation manager)
+> - Acknowledgement of the data being removed from EPA's website that stays politically neutral
 
-* The name of the dataset
-* Short definitions of the indicators based on page 15 of the docs
-* Reference to the fact that these are percentiles, not direct rates or percentages
-* A citation for the dataset from Harvard Dataverse (recommended citations are there, as is metadata to use in a citation manager)
-* Acknowledgement of the data being removed from EPA's website that stays politically neutral
+```{r}
+indicator_colors <- c(
+  "wastewater" = "#39568A",
+  "hazardous" = "#A34B16",
+  "tanks" = "#287567"
+)
+
+ggplot(
+  ej_selected,
+  aes(
+    x = factor(
+      selected_indicator,
+      levels = c("wastewater", "hazardous", "tanks")
+    ),
+    y = d2_ptile,
+    fill = selected_indicator
+  )
+) +
+  geom_boxplot(
+    width = 0.5,
+    alpha = 0.8,
+    outlier.alpha = 0.25
+  ) +
+  scale_fill_manual(values = indicator_colors) +
+  scale_x_discrete(
+    labels = c(
+      wastewater = paste0(
+        "Wastewater\ndischarge"
+      ),
+      hazardous = paste0(
+        "Hazardous\nwaste proximity"
+      ),
+      tanks = paste0(
+        "Underground tanks\nincluding leaking tank"
+      )
+    )
+  ) +
+  scale_y_continuous(
+    limits = c(0, 99),
+    breaks = c(0, 20, 40, 60, 80, 99)
+  ) +
+  labs(
+    title = "Environmental justice rankings across Maryland",
+    subtitle = "Distribution of census tract rankings for three indicators",
+    x = NULL,
+    y = "National two-factor\nEJ percentile",
+    caption = paste(
+      "Source: EPA (2024), EJScreen, Harvard Dataverse.",
+      "EJScreen data were removed from EPA’s website in early 2025.",
+      "This analysis uses the preserved Harvard Dataverse archive.",
+      sep = "\n"
+    )
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    legend.position = "none",
+    panel.grid.minor = element_blank(),
+    panel.grid.major.x = element_blank(),
+    
+    plot.title = element_text(
+      face = "bold",
+      margin = margin(b = 8)
+    ),
+    plot.subtitle = element_text(
+      margin = margin(b = 15)
+    ),
+    
+    axis.text.x = ggtext::element_markdown(
+      size = 12,
+      face = "bold",
+      margin = margin(t = 10)
+    ),
+    axis.title.y = element_text(
+      margin = margin(r = 12)
+    ),
+    
+    plot.caption = element_text(
+      hjust = 0,
+      size = 10,
+      lineheight = 1.2,
+      margin = margin(t = 20)
+    ),
+    plot.caption.position = "plot",
+    plot.title.position = "plot",
+    plot.margin = margin(15, 20, 15, 15)
+  )
+```
 
 ## Knowing your role
 
-You have a summer internship doing data visualization for a public health agency that serves Baltimore city and Baltimore, Anne Arundel, Howard, and Harford Counties. During a heat wave, wildfires start in Western Maryland, and heavy smoke begins to drift into the area. The agency needs to identify census tracts where people may be at heightened risk of health problems related to the smoke so they can do targeted outreach.
+> You have a summer internship doing data visualization for a public health agency that serves Baltimore city and Baltimore, Anne Arundel, Howard, and Harford Counties. During a heat wave, wildfires start in Western Maryland, and heavy smoke begins to drift into the area. The agency needs to identify census tracts where people may be at heightened risk of health problems related to the smoke so they can do targeted outreach.
+>
+> However, your background is not in public health, and you don't have a clear sense of which way the wind and smoke are traveling. But you find a page from AirNow to read about wildfire smoke and public health: https://www.airnow.gov/wildfires/when-smoke-is-in-the-air/
+>
+> You also have some data, namely:
+>
+> - CDC health data in `justviz::cdc`
+> - ACS data in `justviz::acs`
+> - Additional ACS data on households' internet access and workers' commuting methods ("acs_addl.csv" in the same directory as this notebook)
+>
+> Draft two charts you can present to the outreach team at the agency to help them strategize. *Do* put forward what you believe to be information that will help them with this, but *do not* try to give answers you're not qualified to give.
 
-However, your background is not in public health, and you don't have a clear sense of which way the wind and smoke are traveling. But you find a page from AirNow to read about wildfire smoke and public health: https://www.airnow.gov/wildfires/when-smoke-is-in-the-air/ 
+```{r}
+#| label: Part 2
 
-You also have some data, namely:
+glimpse(justviz::cdc)
 
-* CDC health data in `justviz::cdc`
-* ACS data in `justviz::acs`
-* Additional ACS data on households' internet access and workers' commuting methods ("acs_addl.csv" in the same directory as this notebook)
+justviz::cdc |>
+  distinct(indicator) |>
+  print(n = Inf)
 
-Draft two charts you can present to the outreach team at the agency to help them strategize. *Do* put forward what you believe to be information that will help them with this, but *do not* try to give answers you're not qualified to give.
+glimpse(justviz::acs)
+
+names(justviz::acs)
+
+acs_addl <- readr::read_csv("acs_addl.csv")
+
+glimpse(acs_addl)
+
+names(acs_addl)
+```
+
+There is a ton of data here some of the things i am seeing that i can look at with all of this is,
+
+Where online alerts may miss households =
+
+`no_internet / cell_data_only`
+
+Where transportation assistance may be needed =
+
+`no_vehical_hh`
+
+Mobility issues that need accommodations =
+
+`mobilitydisibility`
+
+Older population =
+
+`ages65plus`
+
+Asthma =
+
+`Current asthma`
+
+Finical constraints =
+
+`low_income` or `poverty`
+
+If i was doing this for public health i think looking at health and communication are the most pressing topics. A chart of adult asthma plus a chart with households without internet combines health needs with potential communication issues.
+
+```{r}
+library(tidyverse)
+
+asthma_counties <- justviz::cdc |>
+  filter(
+    level == "county",
+    indicator == "Current asthma",
+    str_detect(
+      location,
+      regex(
+        "Baltimore|Anne Arundel|Howard|Harford",
+        ignore_case = TRUE
+      )
+    )
+  ) |>
+  group_by(location) |>
+  filter(year == max(year, na.rm = TRUE)) |>
+  ungroup()
+
+asthma_counties |>
+  select(location, year, value) |>
+  print(n = Inf)
+
+ggplot(
+  asthma_counties,
+  aes(
+    x = value,
+    y = forcats::fct_reorder(location, value)
+  )
+) +
+  geom_col(
+    fill = "#39568A",
+    width = 0.6
+  ) +
+  geom_text(
+    aes(label = paste0(round(value, 1), "%")),
+    hjust = -0.2,
+    size = 4
+  ) +
+  scale_x_continuous(
+    labels = scales::label_number(suffix = "%"),
+    expand = expansion(mult = c(0, 0.18))
+  ) +
+  labs(
+    title = "Adult asthma prevalence",
+    subtitle = paste(
+      "Baltimore City and Baltimore, Anne Arundel,",
+      "Howard, and Harford Counties",
+      sep = "\n"
+    ),
+    x = "Estimated adults with current asthma (%)",
+    y = NULL,
+    caption = paste(
+      "Source: CDC PLACES, through justviz (CDC, 2025).",
+      "Latest available county-level estimates for adults ages 18 and older.",
+      "These estimates do not measure current smoke exposure.",
+      sep = "\n"
+    )
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    panel.grid.minor = element_blank(),
+    panel.grid.major.y = element_blank(),
+    plot.title = element_text(face = "bold"),
+    axis.text.y = element_text(color = "black"),
+    axis.title.x = element_text(
+      margin = margin(t = 12)
+    ),
+    plot.caption = element_text(
+      hjust = 0,
+      size = 10,
+      margin = margin(t = 18)
+    ),
+    plot.caption.position = "plot",
+    plot.title.position = "plot"
+  )
+library(tidyverse)
+
+packageVersion("justviz")
+
+justviz::cdc |>
+  filter(
+    level == "county",
+    indicator == "Current asthma",
+    str_detect(location, "Baltimore")
+  ) |>
+  select(location, year, value)
+```
+
+\

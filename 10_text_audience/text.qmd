@@ -133,7 +133,6 @@ For both charts, write alt text that will explain the chart to someone using a s
 library(ggplot2)
 library(dplyr)
 library(tidyr)
-library(waffle)
 
 race_tidy |>
   ggplot(aes(x = share, y = name, fill = race)) +
@@ -259,7 +258,6 @@ ggplot(waffle_data, aes(x = x, y = y, fill = race)) +
   )
 
 ```
-
 
 ```{r}
 #| label: chart-public
