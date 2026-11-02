@@ -92,7 +92,7 @@ lengths(counties_mask)
 nearby_counties <- counties_sf |> dplyr::filter(lengths(counties_mask) > 0)
 ```
 
-That should give you a subset of counties---in my case, I have 4. 
+That should give you a subset of counties---in my case, I have 4.
 
 Finally put it all together. Call `ggplot` as usual, but leave it empty since you'll have multiple datasets for the different layers. Then add `geom_sf` calls for `nearby_counties`, `tracts_in_buffer`, and `center_web_merc`, adjusting whatever you want including any `aes` calls inside your layers. Give each `geom_sf` call a data frame with `data = __`.
 
@@ -110,7 +110,6 @@ ggplot() +
   geom_sf(data = tracts_in_buffer, fill = "lightblue") +
   geom_sf(data = center_web_merc, color = "navy")
 ```
-
 
 ## Layers
 
@@ -136,16 +135,16 @@ ggplot()+
 
 ## Legend hacking
 
-Legends in ggplot are normally tough, and with `sf` data they're even worse. Normally a geom can take a true/false/NA value for `show.legend` to determine whether there will be a corresponding legend entry. With `geom_sf`, this argument can take values for the type of shape to show as well. This gives us more options and more headaches. 
+Legends in ggplot are normally tough, and with `sf` data they're even worse. Normally a geom can take a true/false/NA value for `show.legend` to determine whether there will be a corresponding legend entry. With `geom_sf`, this argument can take values for the type of shape to show as well. This gives us more options and more headaches.
 
 Normally we'd want tidy data with a variable to map onto our aesthetics (e.g. some group that we assign to color), but since we often have different spatial data in different data frames, we'll use separate `geom_sf` calls and hard-code fake aesthetics to get a legend. For example, instead of `aes(linewidth = level)` like we would do with a line chart, `aes(linewidth = "Counties")` will force a legend that shows a line or polygon key for counties.
 
 There are a lot of different options for changing your legend keys, including:
 
-* setting a legend type, e.g. `show.legend = "line"` inside `geom_sf`
-* turning on & off multiple legend types, e.g. `show.legend = c(shape = TRUE, color = FALSE)` inside `geom_sf`
-* overriding parts of the legend with a list of options, e.g. `guide = guide_legend(override.aes = list(linewidth = 0))` inside a scale call 
-* changing the key type with a `key_glyph` argument inside a geom (unfortunately not as well documented as other arguments)
+- setting a legend type, e.g. `show.legend = "line"` inside `geom_sf`
+- turning on & off multiple legend types, e.g. `show.legend = c(shape = TRUE, color = FALSE)` inside `geom_sf`
+- overriding parts of the legend with a list of options, e.g. `guide = guide_legend(override.aes = list(linewidth = 0))` inside a scale call
+- changing the key type with a `key_glyph` argument inside a geom (unfortunately not as well documented as other arguments)
 
 To combine multiple legends into one (e.g. color and linewidth), give their aesthetics the same name in a call to `labs`.
 
@@ -200,9 +199,9 @@ ggplot(tracts_with_vacants) +
 # There are gaps where tracts have no overlap?
 ```
 
-With that map, you only draw tracts that are included in both data frames, i.e. tracts in Baltimore city that have at least one vacant notice. Now use a left join so you can keep all tract geometries in the city, but attach the data about vacancies to it. Filter the tracts data frame for just Baltimore city, then do your join. 
+With that map, you only draw tracts that are included in both data frames, i.e. tracts in Baltimore city that have at least one vacant notice. Now use a left join so you can keep all tract geometries in the city, but attach the data about vacancies to it. Filter the tracts data frame for just Baltimore city, then do your join.
 
-There are 199 tracts in the city, so your result should be an `sf` data frame with 199 rows. Make a map of this, with tracts filled based on whether there are any vacancies. Without changing the data, this will be denoted with the fact that `n_vacants` will be NA for rows not in `vacants_by_tract`. Replace NAs with 0 using `tidyr::replace_na(n_vacants, replace = 0)`. Then use `ifelse` to create a variable `has_vacants` with one value for tracts with n_vacants > 0 and another value for other tracts (e.g. "Has vacants" / "No vacants"). Map `has_vacants` to fill, and set a scale that highlights tracts with vacants.
+There are 199 tracts in the city, so your result should be an `sf` data frame with 199 rows. Make a map of this, with tracts filled based on whether there are any vacancies. Without changing the data, this will be denoted with the fact that `n_vacants` will be NA for rows not in `vacants_by_tract`. Replace NAs with 0 using `tidyr::replace_na(n_vacants, replace = 0)`. Then use `ifelse` to create a variable `has_vacants` with one value for tracts with n_vacants \> 0 and another value for other tracts (e.g. "Has vacants" / "No vacants"). Map `has_vacants` to fill, and set a scale that highlights tracts with vacants.
 
 ```{r}
 #| label: vacants-map-2
@@ -222,7 +221,7 @@ ggplot(balt_tract_vacants_sf) +
 
 ```
 
-Repeat that, but this time highlight tracts with more than some certain number of vacants instead of 0. Change the categories you use for `has_vacants` accordingly (e.g. "50+ vacants" / "<50 vacants").
+Repeat that, but this time highlight tracts with more than some certain number of vacants instead of 0. Change the categories you use for `has_vacants` accordingly (e.g. "50+ vacants" / "\<50 vacants").
 
 ```{r}
 #| label: vacants-map-3
@@ -237,7 +236,7 @@ balt_tract_vacants_sf <- balt_sf |>
 
 ggplot(balt_tract_vacants_sf) +
   geom_sf(aes(fill = has_vacants))+
-  scale_fill_manual(values = c("VBNs > 100"= "lightblue", "VBNs < 100" = "purple"))+
+  scale_fill_manual(values = c("VBNs > 100"= "red", "VBNs < 100" = "lightblue"))+
   labs(fill = "Vacant Building Notices\n(VBNs)")
 ```
 
@@ -255,4 +254,3 @@ balt_sf |>
   sf::st_drop_geometry() |>
   dplyr::count(geoid, name = "n_vacants")
 ```
-
