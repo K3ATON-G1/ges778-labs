@@ -165,8 +165,10 @@ ggplot()+
   geom_sf(data = nearby_tracts, aes(color = "Tracts"), fill = NA) +
   geom_sf(data = nearby_counties, aes(color = "Counties"), fill = NA, linewidth = 1) +
   geom_sf(data = center_web_merc, aes(color = "Center"), size = 3) +
-  scale_color_manual(values = c("Tracts" = "grey7", "Counties" = "lightblue", "Center" = "red"))+ #added this to show the county lines. I wouldnt really use a blue like this but since the counties needed to be before the tracts to so i could fill it adding another here let me take the fill away and highlight the border. 
+  scale_color_manual(values = c("Tracts" = "grey7", "Counties" = "lightblue", "Center" = "red"))+ 
   labs(color = "Map Layers")
+
+#two aec(color = "counties") to show the county lines and shade. The counties needed to be before the tracts so when its filled you could still see the tracts borders i decided to use two geom_sf one to fill before tracts (under) and another to highlight the border after tracts (above). I wouldnt really use a blue like this but nice example. 
 ```
 
 ## Joins
@@ -225,6 +227,9 @@ Repeat that, but this time highlight tracts with more than some certain number o
 
 ```{r}
 #| label: vacants-map-3
+#|fig-height: 10
+#| fig-width: 6
+
 balt_sf <- tracts_sf |>
   dplyr::filter(county == "Baltimore city")
 
