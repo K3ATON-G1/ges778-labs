@@ -239,7 +239,6 @@ ggplot(balt_tract_vacants_sf) +
   geom_sf(aes(fill = has_vacants))+
   scale_fill_manual(values = c("VBNs > 100"= "lightblue", "VBNs < 100" = "purple"))+
   labs(fill = "Vacant Building Notices\n(VBNs)")
-
 ```
 
 ### Spatial & spatial

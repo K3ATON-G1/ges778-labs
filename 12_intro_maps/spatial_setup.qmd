@@ -33,6 +33,9 @@ pak::pkg_install("umbc-viz/justviz")
 library(ggplot2)
 # terra needs to be loaded for some methods to work
 library(terra)
+
+
+# I didnt have Rtools donloaded so this wasnt working for a long time but i figured it out since i was also having this issue on my midterm and had to downlaod Rtools for that so now its working. 
 ```
 
 This will download a shapefile of Maryland counties from the Census Bureau's [TIGER system](https://www.census.gov/geographies/mapping-files/time-series/geo/tiger-line-file.html), and make a map.
