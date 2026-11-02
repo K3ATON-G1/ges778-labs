@@ -14,6 +14,7 @@ For that last one, it's not a huge deal if you can't get `rmapshaper` installed.
 
 ```{r}
 #| label: setup
+
 pkgs <- c(
     "sf", # sf : spatial data :: dplyr : tabular data
     "osmdata", # batch download data from OpenStreetMap
@@ -23,8 +24,7 @@ pkgs <- c(
     "tidyterra" # dplyr functions + ggplot geoms for terra rasters
 )
 
-install.packages(pkgs)
-
+# install.packages(pkgs)
 # or pak::pkg_install(pkgs) 
 
 # recent update means you should install justviz
