@@ -6,14 +6,19 @@ format: gfm
 ```{r}
 #| label: setup
 library(ggplot2) 
+library(sf)
 ```
 
 ## Choropleths
 
-Let's make a choropleth! Pick any of the tract-level data we have available in justviz (ACS \[`acs`\], CDC \[`cdc`\], EJSCREEN \[`ej_natl`\], vacants \[`vacants_by_tract`\], or climate vulnerability \[`climate`\]), reshape or filter it if necessary to have your variable of interest as its own column (i.e. CDC needs to be reshaped to wide format or filtered for just one indicator). 
+Let's make a choropleth! Pick any of the tract-level data we have available in justviz (ACS \[`acs`\], CDC \[`cdc`\], EJSCREEN \[`ej_natl`\], vacants \[`vacants_by_tract`\], or climate vulnerability \[`climate`\]), reshape or filter it if necessary to have your variable of interest as its own column (i.e. CDC needs to be reshaped to wide format or filtered for just one indicator).
+
 ```{r}
 names(justviz::climate)
 head(justviz::climate)
+
+names(justviz::acs)
+head(justviz::acs)
 ```
 
 Join it with a tract shapefile (`justviz::tracts_sf`, get a full set of the state's tracts with `tigris::tracts`, and/or filter for whatever counties you want), making sure to put the `sf` data frame on the left side of your join so you retain its data type. Then use `geom_sf` to make a choropleth of a continuous variable. Use `scale_fill_distiller` to use a ColorBrewer palette on continuous data.
@@ -24,13 +29,42 @@ Join it with a tract shapefile (`justviz::tracts_sf`, get a full set of the stat
 choro_climate <- justviz::tracts_sf |>
   dplyr::left_join(justviz::climate,
                    by = "geoid")
+
+ggplot(choro_climate, aes(fill = uhi)) + 
+  #Wanted to use droughts but it came back as just two colors baby blue dark purple. Uhi, not sure what   it means but looks way better as example.
+  geom_sf() +
+  scale_fill_distiller(palette = "Blues", direction = 1) + 
+  theme_dark() 
 ```
 
 Study the docs for `scale_fill_distiller` to understand the difference between the brewer, distiller, and fermenter variants (beyond the punny names). Try all three with your data---only 2 of them will work. Decide which you like best for this data. What tradeoffs do you find between legibility and precision?
 
+> `scale_fill_distiller` and `scale_fill_fermenter` hare very different maps. `distiller` is a unclassified color scheme, the color breaks are spliting the data into as equal as fields as it can so that the variation is better seen. `fermenter` is a graduated color scheme this assigns breaks to specific values i.e 1s = baby blue, 2s = midblue, 3s = blue. if the field is that number then its assigned to that class. This is my understanding of whats happening with arc terms.
+
 ```{r}
 #| label: choro-more-scales 
+#| layout-ncol: 2
  
+#Distiller, Good
+ggplot(choro_climate, aes(fill = uhi)) +
+  geom_sf() +
+  scale_fill_distiller(palette = "Blues", direction = 1) + 
+  theme_dark() 
+
+#Fermenter, Good
+ggplot(choro_climate, aes(fill = uhi)) +
+  geom_sf() +
+  scale_fill_fermenter(palette = "Blues", direction = 1) + 
+  theme_dark() 
+
+#Brewer, DOESNT WORK
+#ggplot(choro_climate, aes(fill = uhi)) + 
+  #geom_sf() +
+  #scale_fill_brewer(palette = "Blues", direction = 1) + 
+  #theme_dark() 
+
+#Ran a lot of the other ones; binned, continues, manual and others none of them seemed to work either at this level. 
+
 ```
 
 ## Binning algorithms
@@ -42,18 +76,128 @@ Instead, experiment with the function `classInt::classify_intervals`, which give
 ```{r}
 #| label: classint
 #| eval: false 
+
+
 justviz::ej_natl |>
     dplyr::filter(indicator == "pm25") |>
-    dplyr::mutate(value_brk = classInt::classify_intervals(value_ptile, n = 5, style = "pretty"))
+    dplyr::mutate(pretty_brk = classInt::classify_intervals(value_ptile, n = 5, style = "pretty"))
+
+justviz::ej_natl |>
+  dplyr::filter(indicator == "pm25") |>
+  dplyr::mutate(quantile_brk = classInt::classify_intervals(value_ptile, n = 5, style = "quantile"))
+
+justviz::ej_natl |>
+  dplyr::filter(indicator == "pm25") |>
+  dplyr::mutate(sd_brk = classInt::classify_intervals(value_ptile, n = 5, style = "sd"))
+
+justviz::ej_natl |>
+  dplyr::filter(indicator == "pm25") |>
+  dplyr::mutate(equal_brk = classInt::classify_intervals(value_ptile, n = 5, style = "equal"))
+
+#Pretty, quantile, equal interval, standard deviation, manual, defined are the ones i remember from arc. Pretty and quantile are the same.
+
+#Style	chosen style: one of "fixed", "sd", "equal", "pretty", "quantile", "kmeans", #"hclust", "bclust", "fisher", "jenks", "dpih", "headtails", or "maximum"
+
+# r vs Arc 
+#Fixed = manual
+#sd = standard deviation
+#equal = equal interval 
+#pretty = pretty 
+#quantile = quantile
+#kmean is a clustering algoritham, cutting into breaks, sort multidemintional data
+#bclust is a higheracial clustering with bagging
+#fisher is a faster version of natural breaks
+#jenks = natural breaks
+#dpih? 
+
+
 ```
 
 Now before remaking your choropleth, cut the variable into bins using one of the algorithms available in `classify_intervals` (look at the function docs). The binned column will be a factor. Use this column for the choropleth's fill, and use the same palette as above with `scale_fill_brewer`. Try multiple algorithms---some will give you way more bins than you can get a palette for, some will give too few to be useful, so just mess around with arguments.
 
 ```{r}
 #| label: choro-binned
- 
+
+choro_climate_breaks <- choro_climate |>
+  dplyr::mutate(
+    uhi_quantile = classInt::classify_intervals(
+      uhi, n = 3, style = "quantile"),
+    uhi_equal = classInt::classify_intervals(
+      uhi, n = 3, style = "equal"),
+    uhi_pretty = classInt::classify_intervals(
+      uhi, n = 3, style = "pretty")
+  )
+
+ggplot(choro_climate_breaks, aes(fill = uhi_quantile)) +
+  geom_sf() +
+  scale_fill_brewer(palette = "Blues", direction = 1) +
+  labs(title = "Quantile", fill = "UHI") +
+  theme_dark()
+
+ggplot(choro_climate_breaks, aes(fill = uhi_equal)) +
+  geom_sf() +
+  scale_fill_brewer(palette = "Blues", direction = 1) +
+  labs(title = "Equal Interval", fill = "UHI") +
+  theme_dark()
+
+ggplot(choro_climate_breaks, aes(fill = uhi_pretty)) +
+  geom_sf() +
+  scale_fill_brewer(palette = "Blues", direction = 1) +
+  labs(title = "Pretty Breaks", fill = "UHI") +
+  theme_dark()
+
+# Interetsing that with the five classes the quantile, equal interval and pretty breaks produce the same class ranges for the UHI data. 
+
+# i chnage the class breaks to three ad they are all diffrent now. It also removed the warning that.   
+  
 ```
 
 ## Do it all again
 
 Now that you've made a choropleth with a sequential fill, and found a binning algorithm that works well for the same data, try it all again with a different variable. Pick something with a different distribution---if the first variable was very skewed, try something closer to a normal or uniform distribution.
+
+```{r}
+#| label: Part-2 Examine
+
+mental_distress_tracts <- justviz::cdc |> 
+  dplyr::filter(level == "tract",
+                indicator == "Frequent mental distress") |>
+  dplyr::select(location, distress = value)
+
+mental_distress_choro <- justviz::tracts_sf |>
+  dplyr::left_join(mental_distress_tracts, by = c("geoid" = "location"))
+
+ggplot(mental_distress_choro, aes(fill = distress)) +
+  geom_sf() + 
+  scale_fill_distiller(palette = "Blues")+
+  labs(title = "Frequent mental Distress", fill = "Adults Precentile") +
+  theme_dark()+
+  theme_void()
+
+mental_distress_choro2 <- mental_distress_choro |>
+  dplyr::mutate(distress_quantile = classInt::classify_intervals (distress, n = 5, style = "quantile"),
+    distress_equal = classInt::classify_intervals (distress, n = 5, style = "equal"),
+    distress_pretty = classInt::classify_intervals (distress, n = 5, style = "pretty")
+  )
+
+ggplot(mental_distress_choro2, aes(fill = distress_quantile)) +
+  geom_sf() +
+  scale_fill_brewer(palette = "Blues", direction = 1) +
+  labs(title = "Quantile", fill = "Frequent mental distress") +
+  theme_dark()
+
+ggplot(mental_distress_choro2, aes(fill = distress_equal)) +
+  geom_sf() +
+  scale_fill_brewer(palette = "Blues", direction = 1) +
+  labs(title = "Equal Interval", fill = "Frequent mental distress") +
+  theme_dark()
+
+ggplot(mental_distress_choro2, aes(fill = distress_pretty)) +
+  geom_sf() +
+  scale_fill_brewer(palette = "Blues", direction = 1) +
+  labs(title = "Pretty Breaks", fill = "Frequent mental distress") +
+  theme_dark()
+
+```
+
+
