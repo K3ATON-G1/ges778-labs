@@ -10,11 +10,20 @@ library(ggplot2)
 
 ## Choropleths
 
-Let's make a choropleth! Pick any of the tract-level data we have available in justviz (ACS [`acs`], CDC [`cdc`], EJSCREEN [`ej_natl`], vacants [`vacants_by_tract`], or climate vulnerability [`climate`]), reshape or filter it if necessary to have your variable of interest as its own column (i.e. CDC needs to be reshaped to wide format or filtered for just one indicator). Join it with a tract shapefile (`justviz::tracts_sf`, get a full set of the state's tracts with `tigris::tracts`, and/or filter for whatever counties you want), making sure to put the `sf` data frame on the left side of your join so you retain its data type. Then use `geom_sf` to make a choropleth of a continuous variable. Use `scale_fill_distiller` to use a ColorBrewer palette on continuous data.
+Let's make a choropleth! Pick any of the tract-level data we have available in justviz (ACS \[`acs`\], CDC \[`cdc`\], EJSCREEN \[`ej_natl`\], vacants \[`vacants_by_tract`\], or climate vulnerability \[`climate`\]), reshape or filter it if necessary to have your variable of interest as its own column (i.e. CDC needs to be reshaped to wide format or filtered for just one indicator). 
+```{r}
+names(justviz::climate)
+head(justviz::climate)
+```
+
+Join it with a tract shapefile (`justviz::tracts_sf`, get a full set of the state's tracts with `tigris::tracts`, and/or filter for whatever counties you want), making sure to put the `sf` data frame on the left side of your join so you retain its data type. Then use `geom_sf` to make a choropleth of a continuous variable. Use `scale_fill_distiller` to use a ColorBrewer palette on continuous data.
 
 ```{r}
 #| label: choro-distiller 
  
+choro_climate <- justviz::tracts_sf |>
+  dplyr::left_join(justviz::climate,
+                   by = "geoid")
 ```
 
 Study the docs for `scale_fill_distiller` to understand the difference between the brewer, distiller, and fermenter variants (beyond the punny names). Try all three with your data---only 2 of them will work. Decide which you like best for this data. What tradeoffs do you find between legibility and precision?
@@ -48,4 +57,3 @@ Now before remaking your choropleth, cut the variable into bins using one of the
 ## Do it all again
 
 Now that you've made a choropleth with a sequential fill, and found a binning algorithm that works well for the same data, try it all again with a different variable. Pick something with a different distribution---if the first variable was very skewed, try something closer to a normal or uniform distribution.
-
