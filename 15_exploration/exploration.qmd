@@ -205,10 +205,10 @@ ggplot(dental_counties, aes(x = value,
                             y = reorder(location, value),
                             fill = quartile)) +
   geom_col() +
-  scale_fill_brewer(palette = "Blues") +
+  scale_fill_brewer(palette = "OrRd") +
   labs(title = "Dental Visits by Maryland County",
-       x = "Adults reporting a dental visit (%)",
+       x = "Precent of Adults reporting a dental visit",
        y = NULL,
-       fill = "Quartile range (%)") +
+       fill = "Quartile range") +
   theme_minimal()
 ```
