@@ -12,7 +12,83 @@ library(ggplot2)
 
 This is going to be a fairly open-ended lab (sorry!). The dataset you'll start out with is one we haven't used before: `justviz::spending`, which comes from the Census Bureau's Consumer Expenditure Survey. It's dense and in a tricky format, so read the docs for it. Not only is there an overview variable, `qtotal`, but also variables for 5 income quintiles. The categories are also hierarchical. All of this gives us a lot to explore and walk a reader through.
 
-First do some light EDA, jotting down questions about the data as you go. Start by getting to know the different categories. How many item types are in each top-level category (`l2`)? How do any of these categories fit into the total spending amount? What are the largest spending categories, and are they the same across income quintiles? (This will require some reshaping of the data.)
+First do some light EDA, jotting down questions about the data as you go. Start by getting to know the different categories.
+
+```{r}
+#| label: Spending_EDA_l2
+
+head(justviz::spending, 12)
+
+# The character fields other then Item have blanks in it so these will need to be cleaned. Qtotal is also the accumulated mean of all quarters. 
+
+l2_types <- justviz::spending|> 
+  dplyr::filter(!is.na(l2)) |>
+  dplyr::count(l2, wt = !is.na(l3), name= "l2_counts")
+
+# Used 13 since it represents the food at home which is made up by l4 and l5.
+
+
+tibble::tibble(measure = c(
+  "Original spending colums",
+  "Original spending row",
+  "l2 types",
+  "l2 counts"),
+  total = c(ncol(justviz::spending),
+            nrow(justviz::spending),
+            nrow(l2_types),
+            sum(l2_types$l2_counts))
+            ) 
+
+```
+
+- How many item types are in each top-level category (`l2`)?
+
+  - There are 14 types of food listed in the l2 catagory and they are counted 86 out of 101 times so 15 are null.
+
+```{r}
+#| label: Spending_EDA_qtotal
+
+total_spending <- justviz::spending|> 
+  dplyr::filter(is.na(l2)) |>
+  dplyr::pull(qtotal)
+
+total_spending
+
+l2_qtotal_precent <- justviz::spending |> 
+  dplyr::filter(!is.na(l2), is.na(l3)) |>
+  dplyr::mutate(percent = round(qtotal / total_spending*100, 1)) |> 
+  dplyr::select(l2, qtotal, percent)
+
+l2_qtotal_precent
+
+```
+
+- How do any of these categories fit into the total spending amount?
+
+  - There are \$10,169 of the total spending that falls into l2 that is 12.9% of annual spending.
+
+```{r}
+#| label: Spending_EDA_Largest
+
+top_by_quintile <- justviz::spending |> 
+  dplyr::filter(!is.na(l2), is.na(l3)) |>
+  tidyr::pivot_longer(q1:q5, names_to = "quintile", values_to = "value")|> 
+     dplyr::group_by(quintile) |>
+     dplyr::slice_max(value, n = 4, with_ties = FALSE) |>
+     dplyr::ungroup() |>
+     dplyr::select(quintile, catagory = l2, spending = value) |>
+     print(n = 20)
+
+ggplot(top_by_quintile, aes(x = spending, y = quintile, fill = catagory)) +
+  geom_col(position = position_stack()) +
+  scale_fill_brewer(palette = "Set2") +
+  coord_cartesian(reverse = "y")
+
+```
+
+- What are the largest spending categories, and are they the same across income quintiles? (This will require some reshaping of the data.)
+
+  - from what was done in Spending_EDA_qtotal i can already see that Housing is at \$26,266 or 33.4%, transportation \$13318 at 17%, food \$10,169 at 12.9% and personal insurance at \$9,797 at 12.5% across the totals. When you look at the data for all the quintiles you see that this is not the same for them all but since quintile 5 is so large its skewing the data. q1 has more spending on food then transportation but q2 has more transportation then food. They both also have healthcare as a option and the last three quintile do not.
 
 With data like this, filtering for whether a column is NA will be your best friend, as will reshaping. For example, spending on all items:
 
@@ -63,12 +139,76 @@ ggplot(meat_types_by_quint, aes(x = value, y = quintile, fill = item)) +
 
 Once you've done some EDA, find something to explore in more detail and develop 1 or more charts that help your reader dig in. Jot down some questions that you think someone might want to explore about this data to guide you. Some techniques to try:
 
-* small multiples, repeating the same chart
-* facets to show different views of the data side by side or in a grid
-* zooming in on a focus area
-* multiple charts in a series
+- small multiples, repeating the same chart
+- facets to show different views of the data side by side or in a grid
+- zooming in on a focus area
+- multiple charts in a series
+
+```{r}
+justviz::spending |>
+  dplyr::filter(l2 == "Housing") |>
+  View()
+```
+
+```{r}
+#| label: Practice
+
+housing_by_quintile <- justviz::spending |>
+  dplyr::filter(l2 == "Housing", !is.na(l3), is.na(l4)) |>
+  dplyr::mutate(item = forcats::fct_reorder(item, qtotal)) |>
+  tidyr::pivot_longer(q1:q5, names_to = "quintile", values_to = "value") |>
+  dplyr::mutate(quintile = forcats::as_factor(quintile))
+
+ggplot(housing_by_quintile, aes(x = value, y = quintile, fill = item)) +
+  geom_col(position = position_stack()) +
+  scale_fill_brewer(palette = "Set2") +
+  coord_cartesian(reverse = "y") +
+  labs(
+    title = "What Makes Up Housing Spending?",
+    x = "Average annual spending",
+    y = "Income quintile",
+    fill = "Housing category"
+  )
+
+```
+
+- Question answered is shelter the biggest housing expense, yes.
+
+- Field l2 has a lot of housing colums while the items are all unique they are clustered as totals in l3 that is where the categories are picked from while filtering to only housing under l2. We use the totals in 13 so by filtering l4 to null it removes all those options since there are 5 shelter rows in l3 we only want the NA one from l4.
+
+- The data keeps getting refined and aggregated down a important question that youd have to ask someone is at what level they want to focus. Here i was looking at housing so options next to that was the limit !is.na(l3) and is.na(14). But if they wanted to look at types of housing where there was three options then you'd have !is.na(l4) as the filter and use is.na(15) to be sure to only tough on the totals and not double count.
+
+- With this data,
+
+  - Within transportation, which costs account for most of the difference between income groups: vehicle purchases, fuel, or other expenses?
+
+  - Does home at home and food away show anything about being in a larger quantile mean you do one or the other more.
+
+  - Does money on health insurance rise accorss the five income quantile.
 
 ## Revising a chart
 
 Now that you've practiced creating explorations for your reader, do the same with a chart of your own. If you're not sick of your midterm data, try one of the charts you made for your project; otherwise, revise a chart from a previous lab. Start with overview data---averages, higher geographies, larger groups---then zoom in in whatever way might be appropriate for the data. Use facets and/or multiple charts to do this, including different types of charts.
 
+- lab 10 final chart #\| label: contrast-labels-light
+
+```{r}
+#| label: Dental_Visit_Tracts
+
+dental_counties <- justviz::cdc |>
+  dplyr::filter(level == "county", indicator == "Dental visit", !is.na(value)) |>
+  dplyr::mutate(
+    quartile = classInt::classify_intervals(value, n = 4, style = "quantile")
+  )
+
+ggplot(dental_counties, aes(x = value, 
+                            y = reorder(location, value),
+                            fill = quartile)) +
+  geom_col() +
+  scale_fill_brewer(palette = "Blues") +
+  labs(title = "Dental Visits by Maryland County",
+       x = "Adults reporting a dental visit (%)",
+       y = NULL,
+       fill = "Quartile range (%)") +
+  theme_minimal()
+```

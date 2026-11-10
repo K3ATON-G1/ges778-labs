@@ -169,7 +169,7 @@ mental_distress_choro <- justviz::tracts_sf |>
 
 ggplot(mental_distress_choro, aes(fill = distress)) +
   geom_sf() + 
-  scale_fill_distiller(palette = "Blues")+
+  scale_fill_distiller(palette = "YlOrRd", direction = 1)+
   labs(title = "Frequent mental Distress", fill = "Adults Precentile") +
   theme_dark()+
   theme_void()
@@ -180,24 +180,41 @@ mental_distress_choro2 <- mental_distress_choro |>
     distress_pretty = classInt::classify_intervals (distress, n = 5, style = "pretty")
   )
 
+#TEST
 ggplot(mental_distress_choro2, aes(fill = distress_quantile)) +
   geom_sf() +
-  scale_fill_brewer(palette = "Blues", direction = 1) +
+  scale_fill_brewer(palette = "YlOrRd", direction = 1) +
   labs(title = "Quantile", fill = "Frequent mental distress") +
-  theme_dark()
+  theme_dark()+
+  theme_void()
 
 ggplot(mental_distress_choro2, aes(fill = distress_equal)) +
   geom_sf() +
-  scale_fill_brewer(palette = "Blues", direction = 1) +
+  scale_fill_brewer(palette = "YlOrRd", direction = 1) +
   labs(title = "Equal Interval", fill = "Frequent mental distress") +
-  theme_dark()
+  theme_dark()+
+  theme_void()
 
 ggplot(mental_distress_choro2, aes(fill = distress_pretty)) +
   geom_sf() +
-  scale_fill_brewer(palette = "Blues", direction = 1) +
+  scale_fill_brewer(palette = "YlOrRd", direction = 1) +
   labs(title = "Pretty Breaks", fill = "Frequent mental distress") +
-  theme_dark()
+  theme_dark()+
+  theme_void()
 
+#DRAFT
+ggplot(mental_distress_choro2, aes(fill = distress_quantile)) +
+  geom_sf(color = "gray25", linewidth = .08) +
+  scale_fill_brewer(palette = "YlOrRd", direction = 1, na.value = "grey80") +
+  labs(title = "Frequent Mental Distress in the Baltimore Area", 
+       subtitle = "census tracts grouped into five quantile classes",
+       fill = "Frequent mental ndistress",
+       caption = "Source: justviz") +
+  theme_void()
+  
+  
+
+# The quantile chart looks the best since its placing the same amount of variables into bins. The breaks are rough but this is making the clearest represnetation of the variation. While the others highlight that Baltimore City has more cases it gets watered down. The equal interval tries to put to many tracts into the same class an since the range is small.
 ```
 
 
